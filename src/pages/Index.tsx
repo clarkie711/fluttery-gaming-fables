@@ -10,8 +10,8 @@ const PIPE_GAP = 150;
 const PIPE_SPEED = 3;
 const BIRD_SIZE = 32; // Bird width/height
 const PIPE_WIDTH = 64; // Pipe width
-const COLLISION_FORGIVENESS = 20; // Increased forgiveness for better gameplay
-const GAP_FORGIVENESS = 30; // Extra forgiveness specifically for the gap area
+const COLLISION_FORGIVENESS = 25; // Increased overall forgiveness
+const GAP_FORGIVENESS = 40; // Significantly increased gap forgiveness
 
 const Index = () => {
   const [gameStarted, setGameStarted] = useState(false);
@@ -87,23 +87,23 @@ const Index = () => {
       // Check collisions with more forgiving hitbox
       pipes.forEach((pipe) => {
         const birdLeft = 0.25 * window.innerWidth;
-        const birdRight = birdLeft + BIRD_SIZE * 0.8;
-        const birdTop = birdPosition + BIRD_SIZE * 0.2;
-        const birdBottom = birdPosition + BIRD_SIZE * 0.8;
+        const birdRight = birdLeft + BIRD_SIZE;
+        const birdTop = birdPosition;
+        const birdBottom = birdPosition + BIRD_SIZE;
 
-        // More forgiving collision detection, especially in the gap
-        if (
-          birdRight > pipe.x + COLLISION_FORGIVENESS &&
-          birdLeft < pipe.x + PIPE_WIDTH - COLLISION_FORGIVENESS &&
-          (
-            // Check top pipe with extra forgiveness near the gap
-            birdTop < pipe.height - (birdBottom < pipe.height + GAP_FORGIVENESS ? GAP_FORGIVENESS : COLLISION_FORGIVENESS) ||
-            // Check bottom pipe with extra forgiveness near the gap
-            birdBottom > pipe.height + PIPE_GAP + (birdTop > pipe.height + PIPE_GAP - GAP_FORGIVENESS ? GAP_FORGIVENESS : COLLISION_FORGIVENESS)
-          )
-        ) {
-          setGameOver(true);
-          toast('Game Over! Try again!');
+        // Check if bird is within pipe's horizontal bounds
+        if (birdRight > pipe.x + COLLISION_FORGIVENESS && 
+            birdLeft < pipe.x + PIPE_WIDTH - COLLISION_FORGIVENESS) {
+          
+          // Calculate the gap zone with extra forgiveness
+          const gapTop = pipe.height - GAP_FORGIVENESS;
+          const gapBottom = pipe.height + PIPE_GAP + GAP_FORGIVENESS;
+          
+          // Only trigger game over if bird is clearly outside the gap zone
+          if (birdBottom < gapTop || birdTop > gapBottom) {
+            setGameOver(true);
+            toast('Game Over! Try again!');
+          }
         }
 
         // Score point
