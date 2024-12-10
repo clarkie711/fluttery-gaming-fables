@@ -10,7 +10,8 @@ const PIPE_GAP = 150;
 const PIPE_SPEED = 3;
 const BIRD_SIZE = 32; // Bird width/height
 const PIPE_WIDTH = 64; // Pipe width
-const COLLISION_FORGIVENESS = 10; // Pixels of forgiveness for collision detection
+const COLLISION_FORGIVENESS = 20; // Increased forgiveness for better gameplay
+const GAP_FORGIVENESS = 30; // Extra forgiveness specifically for the gap area
 
 const Index = () => {
   const [gameStarted, setGameStarted] = useState(false);
@@ -90,15 +91,15 @@ const Index = () => {
         const birdTop = birdPosition + BIRD_SIZE * 0.2;
         const birdBottom = birdPosition + BIRD_SIZE * 0.8;
 
-        // More forgiving collision detection
+        // More forgiving collision detection, especially in the gap
         if (
-          birdRight > pipe.x + COLLISION_FORGIVENESS && // Add forgiveness buffer
-          birdLeft < pipe.x + PIPE_WIDTH - COLLISION_FORGIVENESS && // Add forgiveness buffer
+          birdRight > pipe.x + COLLISION_FORGIVENESS &&
+          birdLeft < pipe.x + PIPE_WIDTH - COLLISION_FORGIVENESS &&
           (
-            // Check top pipe with forgiveness
-            birdTop < pipe.height - COLLISION_FORGIVENESS || 
-            // Check bottom pipe with forgiveness
-            birdBottom > pipe.height + PIPE_GAP + COLLISION_FORGIVENESS
+            // Check top pipe with extra forgiveness near the gap
+            birdTop < pipe.height - (birdBottom < pipe.height + GAP_FORGIVENESS ? GAP_FORGIVENESS : COLLISION_FORGIVENESS) ||
+            // Check bottom pipe with extra forgiveness near the gap
+            birdBottom > pipe.height + PIPE_GAP + (birdTop > pipe.height + PIPE_GAP - GAP_FORGIVENESS ? GAP_FORGIVENESS : COLLISION_FORGIVENESS)
           )
         ) {
           setGameOver(true);
