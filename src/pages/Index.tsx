@@ -8,6 +8,8 @@ const GRAVITY = 0.5;
 const JUMP_FORCE = -10;
 const PIPE_GAP = 150;
 const PIPE_SPEED = 3;
+const BIRD_SIZE = 32; // Bird width/height
+const PIPE_WIDTH = 64; // Pipe width
 
 const Index = () => {
   const [gameStarted, setGameStarted] = useState(false);
@@ -80,16 +82,17 @@ const Index = () => {
         return newPipes;
       });
 
-      // Check collisions
+      // Check collisions with more precise hitbox
       pipes.forEach((pipe) => {
         const birdLeft = 0.25 * window.innerWidth;
-        const birdRight = birdLeft + 32;
-        const birdTop = birdPosition;
-        const birdBottom = birdPosition + 32;
+        const birdRight = birdLeft + BIRD_SIZE * 0.8; // Slightly smaller hitbox
+        const birdTop = birdPosition + BIRD_SIZE * 0.2; // Slightly smaller hitbox
+        const birdBottom = birdPosition + BIRD_SIZE * 0.8; // Slightly smaller hitbox
 
+        // More forgiving collision detection
         if (
-          birdRight > pipe.x &&
-          birdLeft < pipe.x + 64 &&
+          birdRight > pipe.x + PIPE_WIDTH * 0.1 && // Add small buffer on pipe edges
+          birdLeft < pipe.x + PIPE_WIDTH * 0.9 && // Add small buffer on pipe edges
           (birdTop < pipe.height || birdBottom > pipe.height + PIPE_GAP)
         ) {
           setGameOver(true);
