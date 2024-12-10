@@ -10,6 +10,7 @@ const PIPE_GAP = 150;
 const PIPE_SPEED = 3;
 const BIRD_SIZE = 32; // Bird width/height
 const PIPE_WIDTH = 64; // Pipe width
+const COLLISION_FORGIVENESS = 10; // Pixels of forgiveness for collision detection
 
 const Index = () => {
   const [gameStarted, setGameStarted] = useState(false);
@@ -82,18 +83,23 @@ const Index = () => {
         return newPipes;
       });
 
-      // Check collisions with more precise hitbox
+      // Check collisions with more forgiving hitbox
       pipes.forEach((pipe) => {
         const birdLeft = 0.25 * window.innerWidth;
-        const birdRight = birdLeft + BIRD_SIZE * 0.8; // Slightly smaller hitbox
-        const birdTop = birdPosition + BIRD_SIZE * 0.2; // Slightly smaller hitbox
-        const birdBottom = birdPosition + BIRD_SIZE * 0.8; // Slightly smaller hitbox
+        const birdRight = birdLeft + BIRD_SIZE * 0.8;
+        const birdTop = birdPosition + BIRD_SIZE * 0.2;
+        const birdBottom = birdPosition + BIRD_SIZE * 0.8;
 
         // More forgiving collision detection
         if (
-          birdRight > pipe.x + PIPE_WIDTH * 0.1 && // Add small buffer on pipe edges
-          birdLeft < pipe.x + PIPE_WIDTH * 0.9 && // Add small buffer on pipe edges
-          (birdTop < pipe.height || birdBottom > pipe.height + PIPE_GAP)
+          birdRight > pipe.x + COLLISION_FORGIVENESS && // Add forgiveness buffer
+          birdLeft < pipe.x + PIPE_WIDTH - COLLISION_FORGIVENESS && // Add forgiveness buffer
+          (
+            // Check top pipe with forgiveness
+            birdTop < pipe.height - COLLISION_FORGIVENESS || 
+            // Check bottom pipe with forgiveness
+            birdBottom > pipe.height + PIPE_GAP + COLLISION_FORGIVENESS
+          )
         ) {
           setGameOver(true);
           toast('Game Over! Try again!');
