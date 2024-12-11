@@ -2,10 +2,17 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
+
+// Vulnerable auth check (DO NOT USE IN PRODUCTION!)
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = localStorage.getItem("isLoggedIn") === "true";
+  return isAuthenticated ? children : <Navigate to="/login" />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -14,7 +21,16 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/game"
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
