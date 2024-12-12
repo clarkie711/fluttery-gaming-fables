@@ -8,10 +8,10 @@ const GRAVITY = 0.5;
 const JUMP_FORCE = -10;
 const PIPE_GAP = 150;
 const PIPE_SPEED = 3;
-const BIRD_SIZE = 32; // Bird width/height
-const PIPE_WIDTH = 64; // Pipe width
-const COLLISION_FORGIVENESS = 25; // Increased overall forgiveness
-const GAP_FORGIVENESS = 40; // Significantly increased gap forgiveness
+const BIRD_SIZE = 32;
+const PIPE_WIDTH = 64;
+const COLLISION_FORGIVENESS = 25;
+const GAP_FORGIVENESS = 40;
 
 const Index = () => {
   const [gameStarted, setGameStarted] = useState(false);
@@ -19,7 +19,7 @@ const Index = () => {
   const [birdPosition, setBirdPosition] = useState(300);
   const [birdVelocity, setBirdVelocity] = useState(0);
   const [birdRotation, setBirdRotation] = useState(0);
-  const [pipes, setPipes] = useState<Array<{ x: number; height: number }>>([]);
+  const [pipes, setPipes] = useState<Array<{ x: number; height: number; passed?: boolean }>>([]);
   const [score, setScore] = useState(0);
 
   const jump = useCallback(() => {
@@ -65,23 +65,36 @@ const Index = () => {
       setBirdVelocity((prev) => prev + GRAVITY);
       setBirdRotation((prev) => Math.min(prev + 2, 90));
 
-      // Update pipes
+      // Update pipes and check for scoring
       setPipes((prevPipes) => {
-        const newPipes = prevPipes
-          .map((pipe) => ({
-            ...pipe,
-            x: pipe.x - PIPE_SPEED,
-          }))
+        const birdLeft = 0.25 * window.innerWidth;
+        
+        return prevPipes
+          .map((pipe) => {
+            const newX = pipe.x - PIPE_SPEED;
+            
+            // Check if bird has passed the pipe's center and hasn't been counted yet
+            if (!pipe.passed && newX + PIPE_WIDTH / 2 < birdLeft) {
+              setScore((prev) => prev + 1);
+              toast('Point scored!');
+              return { ...pipe, x: newX, passed: true };
+            }
+            
+            return { ...pipe, x: newX };
+          })
           .filter((pipe) => pipe.x > -100);
+      });
 
-        if (newPipes.length < 2) {
-          newPipes.push({
+      // Add new pipes
+      setPipes((prevPipes) => {
+        if (prevPipes.length < 2) {
+          return [...prevPipes, {
             x: 800,
             height: Math.random() * (400 - PIPE_GAP) + 100,
-          });
+            passed: false
+          }];
         }
-
-        return newPipes;
+        return prevPipes;
       });
 
       // Check collisions with more forgiving hitbox
@@ -91,25 +104,16 @@ const Index = () => {
         const birdTop = birdPosition;
         const birdBottom = birdPosition + BIRD_SIZE;
 
-        // Check if bird is within pipe's horizontal bounds
         if (birdRight > pipe.x + COLLISION_FORGIVENESS && 
             birdLeft < pipe.x + PIPE_WIDTH - COLLISION_FORGIVENESS) {
           
-          // Calculate the gap zone with extra forgiveness
           const gapTop = pipe.height - GAP_FORGIVENESS;
           const gapBottom = pipe.height + PIPE_GAP + GAP_FORGIVENESS;
           
-          // Only trigger game over if bird is clearly outside the gap zone
           if (birdBottom < gapTop || birdTop > gapBottom) {
             setGameOver(true);
             toast('Game Over! Try again!');
           }
-        }
-
-        // Score point
-        if (pipe.x + PIPE_SPEED < birdLeft && pipe.x > birdLeft - PIPE_SPEED) {
-          setScore((prev) => prev + 1);
-          toast('Point scored!');
         }
       });
     }, 1000 / 60);
